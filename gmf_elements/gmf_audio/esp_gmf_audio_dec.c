@@ -252,6 +252,7 @@ static esp_gmf_job_err_t esp_gmf_audio_dec_close(esp_gmf_audio_element_handle_t 
     audio_dec->pts = 0;
     esp_gmf_info_sound_t snd_info = {0};
     audio_dec->in_load = NULL;
+    audio_dec->in_data.len = 0;
     esp_gmf_audio_el_set_snd_info(self, &snd_info);
     return ESP_GMF_ERR_OK;
 }
