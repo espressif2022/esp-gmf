@@ -252,6 +252,26 @@ esp_gmf_err_t esp_gmf_audio_helper_reconfig_dec_by_uri(const char *uri, esp_audi
         dec_cfg->dec_type = ESP_AUDIO_SIMPLE_DEC_TYPE_M4A;
     } else if (strstr(uri, ".ts")) {
         dec_cfg->dec_type = ESP_AUDIO_SIMPLE_DEC_TYPE_TS;
+    } else if (strstr(uri, ".opus")) {
+        dec_cfg->dec_type = ESP_AUDIO_SIMPLE_DEC_TYPE_RAW_OPUS;
+        esp_opus_dec_cfg_t opus_cfg = {
+            .sample_rate = 16000,
+            .channel = 1,
+            .self_delimited = false,
+        };
+        if ((dec_cfg->dec_cfg == NULL)
+            || (dec_cfg->cfg_size != sizeof(esp_opus_dec_cfg_t))) {
+            if (dec_cfg->dec_cfg) {
+                esp_gmf_oal_free(dec_cfg->dec_cfg);
+                dec_cfg->dec_cfg = NULL;
+                dec_cfg->cfg_size = 0;
+            }
+            dec_cfg->dec_cfg = esp_gmf_oal_calloc(1, sizeof(esp_opus_dec_cfg_t));
+            ESP_GMF_MEM_CHECK(TAG, dec_cfg->dec_cfg, return ESP_GMF_ERR_MEMORY_LACK;);
+            dec_cfg->cfg_size = sizeof(esp_opus_dec_cfg_t);
+            memcpy(dec_cfg->dec_cfg, &opus_cfg, dec_cfg->cfg_size);
+            ESP_LOGE(TAG, "IS HERE, %s", uri);
+        }
     } else {
         dec_cfg->dec_type = ESP_AUDIO_SIMPLE_DEC_TYPE_NONE;
         ESP_LOGW(TAG, "Not support for simple decoder, %s", uri);

@@ -64,8 +64,8 @@ const audio_codec_gpio_if_t *gpio_if = NULL;
 #endif /* USE_ESP_GMF_ESP_CODEC_DEV_IO */
 
 #ifndef CONFIG_EXAMPLE_ESP_GMF_WIFI
-#define CONFIG_EXAMPLE_ESP_GMF_WIFI_SSID "****"
-#define CONFIG_EXAMPLE_ESP_GMF_WIFI_PASS "****"
+#define CONFIG_EXAMPLE_ESP_GMF_WIFI_SSID "ESP-Audio"
+#define CONFIG_EXAMPLE_ESP_GMF_WIFI_PASS "esp123456"
 #endif /* CONFIG_EXAMPLE_ESP_GMF_WIFI */
 
 typedef enum {

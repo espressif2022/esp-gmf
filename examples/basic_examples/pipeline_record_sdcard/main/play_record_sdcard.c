@@ -54,6 +54,7 @@ void app_main(void)
 #else
     ret = esp_gmf_setup_periph_codec(NULL, &record_info, NULL, &record_dev);
 #endif
+
     ESP_GMF_RET_ON_NOT_OK(TAG, ret, { return; }, "Failed to setup rec codec");
     ESP_LOGI(TAG, "[ 2 ] Register all the elements and set audio information to record codec device");
     esp_gmf_pool_handle_t pool = NULL;

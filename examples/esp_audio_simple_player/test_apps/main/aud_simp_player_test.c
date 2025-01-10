@@ -29,6 +29,7 @@ static const char *TAG = "PLAYER_TEST";
 #define PIPELINE_BLOCK_BIT BIT(0)
 
 static const char *dec_file_path[] = {
+    "file://sdcard/test.opus",
     "file://sdcard/test.m4a",
     "file://sdcard/test.aac",
     "file://sdcard/test.mp3",
