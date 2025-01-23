@@ -134,8 +134,9 @@ static int asp_func_acquire_read(void *handle, esp_gmf_data_bus_block_t *blk, ui
     int ret = func->cb(blk->buf, wanted_size, func->user_ctx);
     blk->valid_size = ret;
     ESP_LOGD(TAG, "%s, vld:%d, blk:%p", __func__, blk->valid_size, blk);
-    if (ret != wanted_size) {
-        ret = 0;
+    // if (ret != wanted_size) {
+    //     ret = 0;
+    if (ret == 0) {
         blk->is_last = true;
     }
     return ret;
@@ -258,6 +259,11 @@ static int __setup_pipeline(esp_audio_simple_player_t *player, const char *uri)
     ESP_GMF_RET_ON_ERROR(TAG, ret, goto __setup_pipe_err, "Failed set URI for in stream, ret:%x", ret);
     ret = esp_gmf_pipeline_loading_jobs(player->pipe);
     ESP_GMF_RET_ON_ERROR(TAG, ret, goto __setup_pipe_err, "Failed loading jobs for pipeline, ret:%x", ret);
+
+    esp_audio_simple_dec_cfg_t *cfg = (esp_audio_simple_dec_cfg_t *)OBJ_GET_CFG(dec_el);
+    esp_opus_dec_cfg_t *opus_dec_cfg = cfg->dec_cfg;
+    opus_dec_cfg->channel = 2;
+    opus_dec_cfg->sample_rate = 8000;
 
 __setup_pipe_err:
     esp_gmf_uri_free(uri_st);

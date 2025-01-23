@@ -258,6 +258,7 @@ esp_gmf_err_t esp_gmf_audio_helper_reconfig_dec_by_uri(const char *uri, esp_audi
             .sample_rate = 16000,
             .channel = 1,
             .self_delimited = false,
+            .frame_duration = ESP_OPUS_DEC_FRAME_DURATION_20_MS,
         };
         if ((dec_cfg->dec_cfg == NULL)
             || (dec_cfg->cfg_size != sizeof(esp_opus_dec_cfg_t))) {
