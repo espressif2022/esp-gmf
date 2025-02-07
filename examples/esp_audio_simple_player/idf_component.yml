@@ -12,11 +12,11 @@ dependencies:
     # path: ../../gmf_elements/gmf_audio
     # version: "*"
     path: ./gmf_elements/gmf_audio
-    git: https://github.com/espressif2022/esp-gmf.git
+    git: https://github.com/espressif/esp-gmf.git
     version: "main"
   espressif/gmf_io:
     # path: ../../gmf_elements/gmf_io
     # version: "*"
     path: ./gmf_elements/gmf_io
-    git: https://github.com/espressif2022/esp-gmf.git
+    git: https://github.com/espressif/esp-gmf.git
     version: "main"
