@@ -4,12 +4,12 @@ description: Espressif GMF Elements Audio Module
 dependencies:
   espressif/esp_audio_codec:
     version: "~2.1.0"
-  # espressif/esp_audio_effects:
-  #   # version: "~1.0.0"
-  #   version: "*"
-  #   git: "https://github.com/espressif2022/esp-gmf.git"
-  #   path: "./extra_libs/esp_audio_effects"
+  espressif/esp_audio_effects:
+    # version: "~1.0.0"
+    version: "*"
+    git: "https://github.com/espressif2022/esp-gmf.git"
+    path: "./extra_libs/esp_audio_effects"
   espressif/gmf_core:
     version: "*"
-    # git: "https://github.com/espressif2022/esp-gmf.git"
-    # path: "./gmf_core"
+    git: "https://github.com/espressif2022/esp-gmf.git"
+    path: "./gmf_core"
