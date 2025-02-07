@@ -28,7 +28,7 @@
 
 #ifdef __cplusplus
 extern "C" {
-#endif
+#endif  /* __cplusplus */
 
 /**
  * @brief  The GMF FIFO Buffer is an interface designed for passing buffer addresses without generating any copies.
@@ -41,7 +41,7 @@ extern "C" {
  */
 
 /**
- * @brief Handle for the GMF FIFO
+ * @brief  Handle for the GMF FIFO
  */
 typedef void *esp_gmf_fifo_handle_t;
 
@@ -53,20 +53,20 @@ typedef void *esp_gmf_fifo_handle_t;
  * @param[out]  handle      Pointer to the FIFO handle to be created
  *
  * @return
- *    - ESP_GMF_ERR_OK           Success
- *    - ESP_GMF_ERR_MEMORY_LACK  Memory allocation failed
- *    - ESP_GMF_ERR_INVALID_ARG  Invalid arguments
+ *       - ESP_GMF_ERR_OK           Success
+ *       - ESP_GMF_ERR_MEMORY_LACK  Memory allocation failed
+ *       - ESP_GMF_ERR_INVALID_ARG  Invalid arguments
  */
 esp_gmf_err_t esp_gmf_fifo_create(int block_cnt, int block_size, esp_gmf_fifo_handle_t *handle);
 
 /**
- * @brief Destroy the FIFO buffer and release resources
+ * @brief  Destroy the FIFO buffer and release resources
  *
  * @param[in]  handle  FIFO handle to be destroyed
  *
  * @return
- *    - ESP_GMF_ERR_OK           Success
- *    - ESP_GMF_ERR_INVALID_ARG  Invalid handle
+ *       - ESP_GMF_ERR_OK           Success
+ *       - ESP_GMF_ERR_INVALID_ARG  Invalid handle
  */
 esp_gmf_err_t esp_gmf_fifo_destroy(esp_gmf_fifo_handle_t handle);
 
@@ -78,10 +78,10 @@ esp_gmf_err_t esp_gmf_fifo_destroy(esp_gmf_fifo_handle_t handle);
  *        2. The obtained buffer address is internal and should not be freed externally.
  *        3. The obtained blocks must be released by `esp_gmf_fifo_release_read` in pairs.
  *
- * @param[in]  handle      FIFO handle
- * @param[out] blk         Pointer to the data block structure to be filled
- * @param[in]  wanted_size Desired size to read in bytes
- * @param[in]  block_ticks Maximum ticks to wait if the block is not available
+ * @param[in]   handle       FIFO handle
+ * @param[out]  blk          Pointer to the data block structure to be filled
+ * @param[in]   wanted_size  Desired size to read in bytes
+ * @param[in]   block_ticks  Maximum ticks to wait if the block is not available
  *
  * @return
  *       - > 0                 The specific length of data being read
@@ -98,9 +98,9 @@ esp_gmf_err_io_t esp_gmf_fifo_acquire_read(esp_gmf_fifo_handle_t handle, esp_gmf
  *        2. `esp_gmf_block_acquire_read` and `esp_gmf_block_release_read` must be called in pairs
  *        3. Calling this function once makes one block available for the write operation
  *
- * @param[in] handle       FIFO handle
- * @param[in] blk          Pointer to the data block structure to be released
- * @param[in] block_ticks  Maximum ticks to wait if necessary
+ * @param[in]  handle       FIFO handle
+ * @param[in]  blk          Pointer to the data block structure to be released
+ * @param[in]  block_ticks  Maximum ticks to wait if necessary
  *
  * @return
  *       - ESP_GMF_IO_OK    Operation succeeded
@@ -139,9 +139,9 @@ esp_gmf_err_io_t esp_gmf_fifo_acquire_write(esp_gmf_fifo_handle_t handle, esp_gm
  *        2. `esp_gmf_fifo_acquire_write` and `esp_gmf_fifo_release_write` must be called in pairs
  *        3. Calling this function once makes one block available for read operations, and the count of freed blocks will be decremented by one
  *
- * @param[in] handle FIFO handle
- * @param[in] blk    Pointer to the data block structure to be released
- * @param[in] block_ticks Maximum ticks to wait if necessary
+ * @param[in]  handle       FIFO handle
+ * @param[in]  blk          Pointer to the data block structure to be released
+ * @param[in]  block_ticks  Maximum ticks to wait if necessary
  *
  * @return
  *       - ESP_GMF_ERR_OK           On success
@@ -150,74 +150,74 @@ esp_gmf_err_io_t esp_gmf_fifo_acquire_write(esp_gmf_fifo_handle_t handle, esp_gm
 esp_gmf_err_io_t esp_gmf_fifo_release_write(esp_gmf_fifo_handle_t handle, esp_gmf_data_bus_block_t *blk, int block_ticks);
 
 /**
- * @brief Indicate that writing to the FIFO is complete
+ * @brief  Indicate that writing to the FIFO is complete
  *
- * @param[in] handle FIFO handle
+ * @param[in]  handle  FIFO handle
  *
  * @return
- *    - ESP_GMF_ERR_OK  Success
- *    - ESP_GMF_ERR_INVALID_ARG  Invalid handle
+ *       - ESP_GMF_ERR_OK           Success
+ *       - ESP_GMF_ERR_INVALID_ARG  Invalid handle
  */
 esp_gmf_err_t esp_gmf_fifo_done_write(esp_gmf_fifo_handle_t handle);
 
 /**
  * @brief  Abort all operations on the FIFO
  *
- * @param[in] handle FIFO handle
+ * @param[in]  handle  FIFO handle
  *
  * @return
- *    - ESP_GMF_ERR_OK  Success
- *    - ESP_GMF_ERR_INVALID_ARG  Invalid handle
+ *       - ESP_GMF_ERR_OK           Success
+ *       - ESP_GMF_ERR_INVALID_ARG  Invalid handle
  */
 esp_gmf_err_t esp_gmf_fifo_abort(esp_gmf_fifo_handle_t handle);
 
 /**
  * @brief  Reset the FIFO to its initial state
  *
- * @param[in] handle FIFO handle
+ * @param[in]  handle  FIFO handle
  *
  * @return
- *    - ESP_GMF_ERR_OK  Success
- *    - ESP_GMF_ERR_INVALID_ARG  Invalid handle
+ *       - ESP_GMF_ERR_OK           Success
+ *       - ESP_GMF_ERR_INVALID_ARG  Invalid handle
  */
 esp_gmf_err_t esp_gmf_fifo_reset(esp_gmf_fifo_handle_t handle);
 
 /**
  * @brief  Get the amount of free space in the FIFO
  *
- * @param[in]  handle    FIFO handle
- * @param[out] free_size Pointer to store the free size in bytes
+ * @param[in]   handle     FIFO handle
+ * @param[out]  free_size  Pointer to store the free size in bytes
  *
  * @return
- *    - ESP_GMF_ERR_OK  Success
- *    - ESP_GMF_ERR_INVALID_ARG  Invalid arguments
+ *       - ESP_GMF_ERR_OK           Success
+ *       - ESP_GMF_ERR_INVALID_ARG  Invalid arguments
  */
 esp_gmf_err_t esp_gmf_fifo_get_free_size(esp_gmf_fifo_handle_t handle, uint32_t *free_size);
 
 /**
  * @brief  Get the amount of filled space in the FIFO
  *
- * @param[in]  handle      FIFO handle
- * @param[out] filled_size Pointer to store the filled size in bytes
+ * @param[in]   handle       FIFO handle
+ * @param[out]  filled_size  Pointer to store the filled size in bytes
  *
  * @return
- *    - ESP_GMF_ERR_OK  Success
- *    - ESP_GMF_ERR_INVALID_ARG  Invalid arguments
+ *       - ESP_GMF_ERR_OK           Success
+ *       - ESP_GMF_ERR_INVALID_ARG  Invalid arguments
  */
 esp_gmf_err_t esp_gmf_fifo_get_filled_size(esp_gmf_fifo_handle_t handle, uint32_t *filled_size);
 
 /**
  * @brief  Get the total capacity of the FIFO
  *
- * @param[in]  handle     FIFO handle
- * @param[out] total_size Pointer to store the total size in bytes
+ * @param[in]   handle      FIFO handle
+ * @param[out]  total_size  Pointer to store the total size in bytes
  *
  * @return
- *    - ESP_GMF_ERR_OK  Success
- *    - ESP_GMF_ERR_INVALID_ARG  Invalid arguments
+ *       - ESP_GMF_ERR_OK           Success
+ *       - ESP_GMF_ERR_INVALID_ARG  Invalid arguments
  */
 esp_gmf_err_t esp_gmf_fifo_get_total_size(esp_gmf_fifo_handle_t handle, uint32_t *total_size);
 
 #ifdef __cplusplus
 }
-#endif
+#endif  /* __cplusplus */

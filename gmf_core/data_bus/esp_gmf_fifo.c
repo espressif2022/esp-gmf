@@ -44,18 +44,18 @@ typedef struct esp_esp_gmf_fifo_node {
 } esp_gmf_fifo_node_t;
 
 /**
- * @brief Structure representing a FIFO (First-In-First-Out) buffer
+ * @brief  Structure representing a FIFO (First-In-First-Out) buffer
  */
 typedef struct {
     uint32_t             node_cnt;            /*!< Maximum number of buffer nodes in the FIFO */
-    uint32_t             capacity;           /*!< Current number of buffers in the FIFO */
-    SemaphoreHandle_t    can_read;           /*!< Semaphore for indicating available data for reading. It blocks reading operations when no data is available */
-    SemaphoreHandle_t    can_write;          /*!< Semaphore for indicating available space for writing. It blocks writing operations when the FIFO is full */
-    SemaphoreHandle_t    lock;               /*!< Semaphore for controlling exclusive access to the FIFO to ensure thread safety */
-    esp_gmf_fifo_node_t *empty_head;         /*!< Pointer to the head of the list of empty buffer nodes that can be used for writing */
-    esp_gmf_fifo_node_t *fill_head;          /*!< Pointer to the head of the list of filled buffer nodes that can be read */
-    uint8_t              _is_write_done: 1;  /*!< Flag indicating if all writing operations to the FIFO have been completed. Set to 1 when writing is finished */
-    uint8_t              _is_abort: 1;       /*!< Flag indicating if an abort operation has been requested. Set to 1 to signal that FIFO operations should be aborted */
+    uint32_t             capacity;            /*!< Current number of buffers in the FIFO */
+    SemaphoreHandle_t    can_read;            /*!< Semaphore for indicating available data for reading. It blocks reading operations when no data is available */
+    SemaphoreHandle_t    can_write;           /*!< Semaphore for indicating available space for writing. It blocks writing operations when the FIFO is full */
+    SemaphoreHandle_t    lock;                /*!< Semaphore for controlling exclusive access to the FIFO to ensure thread safety */
+    esp_gmf_fifo_node_t *empty_head;          /*!< Pointer to the head of the list of empty buffer nodes that can be used for writing */
+    esp_gmf_fifo_node_t *fill_head;           /*!< Pointer to the head of the list of filled buffer nodes that can be read */
+    uint8_t              _is_write_done : 1;  /*!< Flag indicating if all writing operations to the FIFO have been completed. Set to 1 when writing is finished */
+    uint8_t              _is_abort      : 1;  /*!< Flag indicating if an abort operation has been requested. Set to 1 to signal that FIFO operations should be aborted */
 } esp_gmf_fifo_t;
 
 static inline esp_gmf_fifo_node_t *esp_gmf_fifo_node_create(void)
@@ -147,7 +147,7 @@ esp_gmf_err_t esp_gmf_fifo_create(int block_cnt, int block_size, esp_gmf_fifo_ha
     ESP_GMF_MEM_CHECK(TAG, fifo->can_read, goto esp_gmf_fifo_err;);
     fifo->can_write = xSemaphoreCreateBinary();
     ESP_GMF_MEM_CHECK(TAG, fifo->can_write, goto esp_gmf_fifo_err;);
-    fifo->lock = (SemaphoreHandle_t) esp_gmf_oal_mutex_create();
+    fifo->lock = (SemaphoreHandle_t)esp_gmf_oal_mutex_create();
     ESP_GMF_MEM_CHECK(TAG, fifo->lock, goto esp_gmf_fifo_err;);
 
     fifo->capacity = block_cnt;
@@ -168,7 +168,7 @@ esp_gmf_err_t esp_gmf_fifo_destroy(esp_gmf_fifo_handle_t handle)
     return ESP_GMF_ERR_OK;
 }
 
-esp_gmf_err_io_t esp_gmf_fifo_acquire_read (esp_gmf_fifo_handle_t handle, esp_gmf_data_bus_block_t *blk, uint32_t wanted_size, int block_ticks)
+esp_gmf_err_io_t esp_gmf_fifo_acquire_read(esp_gmf_fifo_handle_t handle, esp_gmf_data_bus_block_t *blk, uint32_t wanted_size, int block_ticks)
 {
     ESP_GMF_NULL_CHECK(TAG, handle, return ESP_GMF_IO_FAIL);
     ESP_GMF_NULL_CHECK(TAG, blk, return ESP_GMF_IO_FAIL);
@@ -190,12 +190,12 @@ esp_gmf_err_io_t esp_gmf_fifo_acquire_read (esp_gmf_fifo_handle_t handle, esp_gm
     blk->buf_length = node->buf_length;
     blk->valid_size = node->valid_size;
     blk->is_last = node->is_done;
-    ESP_LOGD(TAG, "RD_ACQ-, hd:%p, b:%p, l:%d, valid:%d, n:%ld, e:%d, f:%d", handle, blk->buf, blk->buf_length, blk->valid_size,fifo->node_cnt,
+    ESP_LOGD(TAG, "RD_ACQ-, hd:%p, b:%p, l:%d, valid:%d, n:%ld, e:%d, f:%d", handle, blk->buf, blk->buf_length, blk->valid_size, fifo->node_cnt,
              esp_gmf_fifo_node_get_cnt(fifo->empty_head), esp_gmf_fifo_node_get_cnt(fifo->fill_head));
-    return  blk->valid_size;
+    return blk->valid_size;
 }
 
-esp_gmf_err_io_t esp_gmf_fifo_release_read (esp_gmf_fifo_handle_t handle, esp_gmf_data_bus_block_t *blk, int block_ticks)
+esp_gmf_err_io_t esp_gmf_fifo_release_read(esp_gmf_fifo_handle_t handle, esp_gmf_data_bus_block_t *blk, int block_ticks)
 {
     ESP_GMF_NULL_CHECK(TAG, handle, return ESP_GMF_IO_FAIL);
     ESP_GMF_NULL_CHECK(TAG, blk, return ESP_GMF_IO_FAIL);
@@ -210,6 +210,7 @@ esp_gmf_err_io_t esp_gmf_fifo_release_read (esp_gmf_fifo_handle_t handle, esp_gm
         esp_gmf_oal_mutex_unlock(fifo->lock);
         return ESP_GMF_IO_FAIL;
     }
+
     node->is_done = false;
     node->valid_size = 0;
     node->next = NULL;
@@ -229,13 +230,13 @@ esp_gmf_err_io_t esp_gmf_fifo_release_read (esp_gmf_fifo_handle_t handle, esp_gm
     return ESP_GMF_ERR_OK;
 }
 
-esp_gmf_err_io_t esp_gmf_fifo_acquire_write (esp_gmf_fifo_handle_t handle, esp_gmf_data_bus_block_t *blk, uint32_t wanted_size, int block_ticks)
+esp_gmf_err_io_t esp_gmf_fifo_acquire_write(esp_gmf_fifo_handle_t handle, esp_gmf_data_bus_block_t *blk, uint32_t wanted_size, int block_ticks)
 {
     ESP_GMF_NULL_CHECK(TAG, handle, return ESP_GMF_IO_FAIL);
     ESP_GMF_NULL_CHECK(TAG, blk, return ESP_GMF_IO_FAIL);
     esp_gmf_fifo_t *fifo = (esp_gmf_fifo_t *)handle;
 
-    ESP_LOGD(TAG, "WR_ACQ+, hd:%p, wanted:%ld, ticks:%d", handle,wanted_size, block_ticks);
+    ESP_LOGD(TAG, "WR_ACQ+, hd:%p, wanted:%ld, ticks:%d", handle, wanted_size, block_ticks);
     esp_gmf_fifo_node_t *node = NULL;
     esp_gmf_oal_mutex_lock(fifo->lock);
     if (fifo->empty_head == NULL) {
@@ -260,7 +261,7 @@ esp_gmf_err_io_t esp_gmf_fifo_acquire_write (esp_gmf_fifo_handle_t handle, esp_g
         }
     }
     node = fifo->empty_head;
-    if (node->buf_length < wanted_size ) {
+    if (node->buf_length < wanted_size) {
         esp_gmf_oal_free(node->buffer);
         node->buffer = esp_gmf_oal_malloc(wanted_size);
         ESP_GMF_NULL_CHECK(TAG, node->buffer, {esp_gmf_oal_mutex_unlock(fifo->lock); return ESP_GMF_ERR_MEMORY_LACK;});
@@ -276,7 +277,7 @@ esp_gmf_err_io_t esp_gmf_fifo_acquire_write (esp_gmf_fifo_handle_t handle, esp_g
     return blk->buf_length;
 }
 
-esp_gmf_err_io_t esp_gmf_fifo_release_write (esp_gmf_fifo_handle_t handle, esp_gmf_data_bus_block_t *blk, int block_ticks)
+esp_gmf_err_io_t esp_gmf_fifo_release_write(esp_gmf_fifo_handle_t handle, esp_gmf_data_bus_block_t *blk, int block_ticks)
 {
     ESP_GMF_NULL_CHECK(TAG, handle, return ESP_GMF_IO_FAIL);
     ESP_GMF_NULL_CHECK(TAG, blk, return ESP_GMF_IO_FAIL);

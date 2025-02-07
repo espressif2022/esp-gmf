@@ -134,14 +134,14 @@ TEST_CASE("FIFO read and write on different task", "ESP_GMF_FIFO")
     esp_gmf_fifo_create(10, 1, &fifo);
     ESP_LOGI(TAG, "TEST Create GMF FIFO, %p", fifo);
     TEST_ASSERT_NOT_NULL(fifo);
-    uint8_t prority[][2] = { {5, 5}, {0,10,}, {10, 0}};
+    uint8_t priority[][2] = { {5, 5}, {0,10,}, {10, 0}};
 
-    for (size_t i = 0; i < sizeof(prority) / sizeof(prority[0]); i++){
-        ESP_LOGW(TAG, "Test FIFO with priority %d, %d\r\n", prority[i][0], prority[i][1]);
+    for (size_t i = 0; i < sizeof(priority) / sizeof(priority[0]); i++){
+        ESP_LOGW(TAG, "Test FIFO with priority %d, %d\r\n", priority[i][0], priority[i][1]);
         read_is_done = false;
         write_is_done = false;
-        xTaskCreate(read_task, "read", 4096, fifo, prority[i][0], NULL);
-        xTaskCreate(write_task, "write", 4096, fifo, prority[i][1], NULL);
+        xTaskCreate(read_task, "read", 4096, fifo, priority[i][0], NULL);
+        xTaskCreate(write_task, "write", 4096, fifo, priority[i][1], NULL);
         while (1) {
             vTaskDelay(10 / portTICK_PERIOD_MS);
             if (read_is_done && write_is_done) {
