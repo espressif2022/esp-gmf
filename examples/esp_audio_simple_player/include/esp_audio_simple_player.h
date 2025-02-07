@@ -23,6 +23,7 @@
  */
 
 #pragma once
+#include "esp_gmf_err.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -53,7 +54,7 @@ typedef enum {
  */
 typedef struct {
     int       sample_rate;   /*!< Sample rate */
-    int       bps;           /*!< Bits per sample */
+    int       bitrate;       /*!< Bits per second */
     uint16_t  channels : 8;  /*!< Number of channels */
     uint16_t  bits     : 8;  /*!< Bit depth */
 } esp_asp_music_info_t;
@@ -120,7 +121,7 @@ esp_gmf_err_t esp_audio_simple_player_set_event(esp_asp_handle_t handle, const e
 /**
  * @brief  Run the audio simple player using the given URI. After this function is called, it will set up a pipeline based on the given URI,
  *         unless esp_audio_simple_player_set_pipeline was called previously. The player determines the audio format based on the file extension,
- *         and currently supports formats including AAC, MP3, AMR, FLAC, WAV, M4A, and TS.
+ *         and currently supports formats including AAC, MP3, AMR, FLAC, WAV, M4A, RAW_OPUS, and TS.
  *
  * @note  For the URI, the `scheme`, `host` and `path` segments are mandatory.
  *        If these are missing, an `ESP_GMF_ERR_INVALID_URI` error will be returned.
@@ -133,8 +134,9 @@ esp_gmf_err_t esp_audio_simple_player_set_event(esp_asp_handle_t handle, const e
  *           - "file://sdcard/test.mp3"
  *           - "raw://sdcard/test.mp3", it is required the esp_asp_cfg_t input data callback
  *
- * @param[in]  handle  Handle to audio simple player instance
- * @param[in]  uri     URI of the audio resource
+ * @param[in]  handle      Handle to audio simple player instance
+ * @param[in]  uri         URI of the audio resource
+ * @param[in]  music_info  Music information, it is applicable for raw encoded data, such as PCM, without an OGG header in Opus, otherwise it is ignored
  *
  * @return
  *       - ESP_GMF_ERR_OK             On success
@@ -146,14 +148,15 @@ esp_gmf_err_t esp_audio_simple_player_set_event(esp_asp_handle_t handle, const e
  *       - ESP_GMF_ERR_NOT_SUPPORT    The in stream is not correct
  *       - ESP_GMF_ERR_FAIL           Others error
  */
-esp_gmf_err_t esp_audio_simple_player_run(esp_asp_handle_t handle, const char *uri);
+esp_gmf_err_t esp_audio_simple_player_run(esp_asp_handle_t handle, const char *uri, esp_asp_music_info_t *music_info);
 
 /**
- * @brief  Run the audio simple player until the resource is fully played or an error occurs
+ * @brief  Run the audio simple player in synchronized mode until played to end or meet any error
  *         For more information, refer to `esp_audio_simple_player_run`
  *
- * @param[in]  handle  Handle to audio simple player instance
- * @param[in]  uri     URI of the audio resource
+ * @param[in]  handle      Handle to audio simple player instance
+ * @param[in]  uri         URI of the audio resource
+ * @param[in]  music_info  Music information, it is applicable for raw encoded data, such as PCM, without an OGG header in Opus, otherwise it is ignored
  *
  * @return
  *       - ESP_GMF_ERR_OK             On success
@@ -165,7 +168,7 @@ esp_gmf_err_t esp_audio_simple_player_run(esp_asp_handle_t handle, const char *u
  *       - ESP_GMF_ERR_NOT_SUPPORT    The in stream not correct
  *       - ESP_GMF_ERR_FAIL           Others error
  */
-esp_gmf_err_t esp_audio_simple_player_run_to_end(esp_asp_handle_t handle, const char *uri);
+esp_gmf_err_t esp_audio_simple_player_run_to_end(esp_asp_handle_t handle, const char *uri, esp_asp_music_info_t *music_info);
 
 /**
  * @brief  Stop the audio simple player

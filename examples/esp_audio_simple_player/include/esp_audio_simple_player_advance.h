@@ -33,6 +33,13 @@ extern "C" {
 #endif  /* __cplusplus */
 
 /**
+ * @brief  The audio simple player uses fixed Espressif official tags for IO, such as `http` for HTTP IO, `file` for FILE IO, etc.
+ *         If you want to use other IOs, please use `esp_audio_simple_player_register_io` to register the IO.
+ *         If you want to add new element for pipeline, please use `esp_audio_simple_player_register_el` to register the elements.
+ *         Then, call `esp_audio_simple_player_set_pipeline` to set the specific pipeline.
+ */
+
+/**
  * @brief  Register an IO handle with the audio simple player
  *
  * @note   It is called after `esp_audio_simple_player_new` and before `esp_audio_simple_player_run`
@@ -72,7 +79,7 @@ esp_gmf_err_t esp_audio_simple_player_register_el(esp_asp_handle_t handle, esp_g
  *     - This function must be called after initializing the ESP Audio Simple Player but before `esp_audio_simple_player_run`
  *     - Ensure that all specified element names (`in_name`, `el_name`) correspond to valid and properly registered components in the audio pipeline
  *     - After this API is called, the esp_audio_simple_player_run only runs the pipeline; it no longer sets up the pipeline using the URI
- *     - The sets pipline handle is destroyed only by `esp_audio_simple_player_destroy`
+ *     - The sets pipeline handle is destroyed only by `esp_audio_simple_player_destroy`
  *
  * @param  handle          The handle to the ESP Audio Simple Player instance
  * @param  in_name         The name of the input element in the pipeline

@@ -76,7 +76,7 @@ void task_audio_run_to_end(void *param)
 {
     const char *uri = "file://sdcard/test.mp3";
     esp_asp_handle_t player = (esp_asp_handle_t)param;
-    esp_gmf_err_t err = esp_audio_simple_player_run_to_end(player, uri);
+    esp_gmf_err_t err = esp_audio_simple_player_run_to_end(player, uri, NULL);
     TEST_ASSERT_EQUAL(ESP_OK, err);
     vTaskDelete(NULL);
 }
@@ -148,7 +148,7 @@ TEST_CASE("Play, async run and stop", "Simple_Player")
         err = esp_audio_simple_player_set_event(handle, mock_event_callback, NULL);
 
         const char *uri = "file://sdcard/test.mp3";
-        err = esp_audio_simple_player_run(handle, uri);
+        err = esp_audio_simple_player_run(handle, uri, NULL);
         TEST_ASSERT_EQUAL(ESP_OK, err);
         vTaskDelay(1000 / portTICK_PERIOD_MS);
         esp_asp_state_t state;
@@ -201,7 +201,7 @@ TEST_CASE("Play, Sync run and stop", "Simple_Player")
     err = esp_audio_simple_player_set_event(handle, mock_event_callback, NULL);
 
     const char *uri = "file://sdcard/test.mp3";
-    err = esp_audio_simple_player_run_to_end(handle, uri);
+    err = esp_audio_simple_player_run_to_end(handle, uri, NULL);
     TEST_ASSERT_EQUAL(ESP_OK, err);
 
     esp_asp_state_t state;
@@ -264,7 +264,7 @@ TEST_CASE("Play, Advance API run and stop", "Simple_Player")
     esp_audio_simple_player_set_pipeline(handle, NULL, name, 5);
 
     const char *uri = "file://sdcard/test.mp3";
-    err = esp_audio_simple_player_run(handle, uri);
+    err = esp_audio_simple_player_run(handle, uri, NULL);
     TEST_ASSERT_EQUAL(ESP_OK, err);
     vTaskDelay(1000 / portTICK_PERIOD_MS);
     esp_asp_state_t state;
@@ -278,7 +278,7 @@ TEST_CASE("Play, Advance API run and stop", "Simple_Player")
 
 
     const char *uri2 = "file://sdcard/test.aac";
-    err = esp_audio_simple_player_run(handle, uri2);
+    err = esp_audio_simple_player_run(handle, uri2, NULL);
     TEST_ASSERT_EQUAL(ESP_OK, err);
     vTaskDelay(1000 / portTICK_PERIOD_MS);
     err = esp_audio_simple_player_get_state(handle, &state);
@@ -331,7 +331,7 @@ TEST_CASE("Play, pause,resume", "Simple_Player")
     err = esp_audio_simple_player_set_event(handle, mock_event_callback, NULL);
 
     const char *uri = "file://sdcard/test.mp3";
-    err = esp_audio_simple_player_run(handle, uri);
+    err = esp_audio_simple_player_run(handle, uri, NULL);
     TEST_ASSERT_EQUAL(ESP_OK, err);
 
     esp_asp_state_t state;
@@ -451,7 +451,7 @@ TEST_CASE("Play, Raw IN MP3", "Simple_Player")
     err = esp_audio_simple_player_set_event(handle, mock_event_callback, NULL);
 
     const char *uri = "raw://sdcard/test.mp3";
-    err = esp_audio_simple_player_run(handle, uri);
+    err = esp_audio_simple_player_run(handle, uri, NULL);
     TEST_ASSERT_EQUAL(ESP_OK, err);
 
     esp_asp_state_t state;
@@ -510,7 +510,7 @@ TEST_CASE("Play, Multiple-file Sync Playing", "Simple_Player")
     int repeat = 1;
     for (int i = 0; i < repeat; ++i) {
         for (int i = 0; i < sizeof(dec_file_path) / sizeof(char *); ++i) {
-            err = esp_audio_simple_player_run_to_end(handle, dec_file_path[i]);
+            err = esp_audio_simple_player_run_to_end(handle, dec_file_path[i], NULL);
             // TEST_ASSERT_EQUAL(ESP_OK, err);
             ESP_GMF_MEM_SHOW(TAG);
         }
@@ -573,7 +573,7 @@ TEST_CASE("Play, Multiple-file Async Playing", "Simple_Player")
 
     ESP_GMF_MEM_SHOW(TAG);
     for (int i = 0; i < sizeof(dec_file_path) / sizeof(char *); ++i) {
-        err = esp_audio_simple_player_run(handle, dec_file_path[i]);
+        err = esp_audio_simple_player_run(handle, dec_file_path[i], NULL);
         TEST_ASSERT_EQUAL(ESP_OK, err);
         ESP_GMF_MEM_SHOW(TAG);
         xSemaphoreTake(semph_event, portMAX_DELAY);

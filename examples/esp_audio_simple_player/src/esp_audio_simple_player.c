@@ -40,11 +40,12 @@
 #include "esp_audio_dec_default.h"
 #include "esp_audio_simple_dec_default.h"
 
-#define PIPELINE_STOPPED_BIT  BIT(0)
-#define PIPELINE_FINISHED_BIT BIT(1)
-#define PIPELINE_ERROR_BIT    BIT(2)
+#define ASP_PIPELINE_STOPPED_BIT  BIT(0)
+#define ASP_PIPELINE_FINISHED_BIT BIT(1)
+#define ASP_PIPELINE_ERROR_BIT    BIT(2)
 
 static const char *TAG = "AUD_SIMP_PLAYER";
+static uint8_t esp_asp_decoder_ref_count = 0;
 
 // String representation of the states
 const char *esp_asp_state_strings[] = {
@@ -101,11 +102,11 @@ static esp_err_t _pipeline_event(esp_gmf_event_pkt_t *event, void *ctx)
         player->event_cb(&user_evt, player->user_ctx);
         if (player->wait_event) {
             if (event->sub == ESP_GMF_EVENT_STATE_STOPPED) {
-                xEventGroupSetBits((EventGroupHandle_t)player->wait_event, PIPELINE_STOPPED_BIT);
+                xEventGroupSetBits((EventGroupHandle_t)player->wait_event, ASP_PIPELINE_STOPPED_BIT);
             } else if (event->sub == ESP_GMF_EVENT_STATE_FINISHED) {
-                xEventGroupSetBits((EventGroupHandle_t)player->wait_event, PIPELINE_FINISHED_BIT);
+                xEventGroupSetBits((EventGroupHandle_t)player->wait_event, ASP_PIPELINE_FINISHED_BIT);
             } else if (event->sub == ESP_GMF_EVENT_STATE_ERROR) {
-                xEventGroupSetBits((EventGroupHandle_t)player->wait_event, PIPELINE_ERROR_BIT);
+                xEventGroupSetBits((EventGroupHandle_t)player->wait_event, ASP_PIPELINE_ERROR_BIT);
             }
         }
     } else if (event->type == ESP_GMF_EVT_TYPE_REPORT_INFO) {
@@ -113,7 +114,7 @@ static esp_err_t _pipeline_event(esp_gmf_event_pkt_t *event, void *ctx)
         memcpy(&esp_gmf_info, event->payload, event->payload_size);
         esp_asp_music_info_t info = {0};
         info.sample_rate = esp_gmf_info.sample_rates;
-        info.bps = esp_gmf_info.bps;
+        info.bitrate = esp_gmf_info.bitrate;
         info.channels = esp_gmf_info.channels;
         info.bits = esp_gmf_info.bits;
 
@@ -134,9 +135,8 @@ static int asp_func_acquire_read(void *handle, esp_gmf_data_bus_block_t *blk, ui
     int ret = func->cb(blk->buf, wanted_size, func->user_ctx);
     blk->valid_size = ret;
     ESP_LOGD(TAG, "%s, vld:%d, blk:%p", __func__, blk->valid_size, blk);
-    // if (ret != wanted_size) {
-    //     ret = 0;
-    if (ret == 0) {
+    if (ret != wanted_size) {
+        ret = 0;
         blk->is_last = true;
     }
     return ret;
@@ -167,7 +167,7 @@ static int asp_func_release_write(void *handle, esp_gmf_data_bus_block_t *blk, i
     return ret;
 }
 
-static int __setup_pipeline(esp_audio_simple_player_t *player, const char *uri)
+static int __setup_pipeline(esp_audio_simple_player_t *player, const char *uri, esp_asp_music_info_t *music_info)
 {
     esp_gmf_uri_t *uri_st = NULL;
     int ret = 0;
@@ -253,17 +253,29 @@ static int __setup_pipeline(esp_audio_simple_player_t *player, const char *uri)
     esp_gmf_element_handle_t dec_el = NULL;
     ret = esp_gmf_pipeline_get_el_by_name(player->pipe, "aud_simp_dec", &dec_el);
     ESP_GMF_RET_ON_ERROR(TAG, ret, goto __setup_pipe_err, "There is no decoder in pipeline");
-    ret = esp_gmf_audio_helper_reconfig_dec_by_uri((char *)uri_st->path, OBJ_GET_CFG(dec_el));
+    if (music_info) {
+        esp_gmf_info_sound_t info ={
+            .sample_rates = music_info->sample_rate,
+            .channels = music_info->channels,
+            .bits = music_info->bits,
+            .bitrate = music_info->bitrate,
+        };
+        ESP_LOGI(TAG, "Reconfig decoder by music info, rate:%d, channels:%d, bits:%d, bitrate:%d", info.sample_rates, info.channels, info.bits, info.bitrate);
+        ret = esp_gmf_audio_helper_reconfig_dec_by_uri((char *)uri_st->path, &info, OBJ_GET_CFG(dec_el));
+    } else {
+        esp_gmf_info_sound_t info ={
+            .sample_rates = 16000,
+            .channels = 1,
+            .bits = 16,
+            .bitrate = 0,
+        };
+        ret = esp_gmf_audio_helper_reconfig_dec_by_uri((char *)uri_st->path, &info, OBJ_GET_CFG(dec_el));
+    }
     ESP_GMF_RET_ON_ERROR(TAG, ret, goto __setup_pipe_err, "The audio format does not support, ret:%x, path:%p", ret, uri_st->path);
     ret = esp_gmf_pipeline_set_in_uri(player->pipe, uri);
     ESP_GMF_RET_ON_ERROR(TAG, ret, goto __setup_pipe_err, "Failed set URI for in stream, ret:%x", ret);
     ret = esp_gmf_pipeline_loading_jobs(player->pipe);
     ESP_GMF_RET_ON_ERROR(TAG, ret, goto __setup_pipe_err, "Failed loading jobs for pipeline, ret:%x", ret);
-
-    esp_audio_simple_dec_cfg_t *cfg = (esp_audio_simple_dec_cfg_t *)OBJ_GET_CFG(dec_el);
-    esp_opus_dec_cfg_t *opus_dec_cfg = cfg->dec_cfg;
-    opus_dec_cfg->channel = 2;
-    opus_dec_cfg->sample_rate = 8000;
 
 __setup_pipe_err:
     esp_gmf_uri_free(uri_st);
@@ -283,8 +295,11 @@ esp_gmf_err_t esp_audio_simple_player_new(esp_asp_cfg_t *cfg, esp_asp_handle_t *
         esp_gmf_oal_free(player);
         return ESP_GMF_ERR_MEMORY_LACK;
     }
-    esp_audio_dec_register_default();
-    esp_audio_simple_dec_register_default();
+    if (esp_asp_decoder_ref_count == 0){
+        esp_audio_dec_register_default();
+        esp_audio_simple_dec_register_default();
+    }
+    esp_asp_decoder_ref_count++;
 
     asp_pool_register_audio(player);
     asp_pool_register_io(player);
@@ -320,7 +335,7 @@ esp_gmf_err_t esp_audio_simple_player_set_event(esp_asp_handle_t handle, const e
     return ESP_GMF_ERR_OK;
 }
 
-esp_gmf_err_t esp_audio_simple_player_run(esp_asp_handle_t handle, const char *uri)
+esp_gmf_err_t esp_audio_simple_player_run(esp_asp_handle_t handle, const char *uri, esp_asp_music_info_t *music_info)
 {
     ESP_GMF_NULL_CHECK(TAG, handle, { return ESP_GMF_ERR_INVALID_ARG;});
     ESP_GMF_NULL_CHECK(TAG, uri, { return ESP_GMF_ERR_INVALID_ARG;});
@@ -329,7 +344,7 @@ esp_gmf_err_t esp_audio_simple_player_run(esp_asp_handle_t handle, const char *u
         ESP_LOGE(TAG, "The player still running, call stop first, st:%d", player->state);
         return ESP_GMF_ERR_INVALID_STATE;
     }
-    int ret = __setup_pipeline(player, uri);
+    int ret = __setup_pipeline(player, uri, music_info);
     ESP_GMF_RET_ON_ERROR(TAG, ret, return ret, "Failed to setup pipeline, ret:%x", ret);
     player->state = ESP_ASP_STATE_NONE;
     esp_gmf_pipeline_set_event(player->pipe, _pipeline_event, player);
@@ -337,7 +352,7 @@ esp_gmf_err_t esp_audio_simple_player_run(esp_asp_handle_t handle, const char *u
     return ret;
 }
 
-esp_gmf_err_t esp_audio_simple_player_run_to_end(esp_asp_handle_t handle, const char *uri)
+esp_gmf_err_t esp_audio_simple_player_run_to_end(esp_asp_handle_t handle, const char *uri, esp_asp_music_info_t *music_info)
 {
     ESP_GMF_NULL_CHECK(TAG, handle, { return ESP_GMF_ERR_INVALID_ARG;});
     ESP_GMF_NULL_CHECK(TAG, uri, { return ESP_GMF_ERR_INVALID_ARG;});
@@ -350,17 +365,17 @@ esp_gmf_err_t esp_audio_simple_player_run_to_end(esp_asp_handle_t handle, const 
         player->wait_event = (void *)xEventGroupCreate();
         ESP_GMF_NULL_CHECK(TAG, player->wait_event, return ESP_GMF_ERR_MEMORY_LACK);
     }
-    int ret = __setup_pipeline(player, uri);
+    int ret = __setup_pipeline(player, uri, music_info);
     ESP_GMF_RET_ON_ERROR(TAG, ret, return ret, "Failed to setup pipeline on sync play, ret:%x", ret);
     esp_gmf_pipeline_set_event(player->pipe, _pipeline_event, player);
+    xEventGroupClearBits(player->wait_event, ASP_PIPELINE_ERROR_BIT | ASP_PIPELINE_STOPPED_BIT | ASP_PIPELINE_FINISHED_BIT);
     ret = esp_gmf_pipeline_run(player->pipe);
     ESP_GMF_RET_ON_ERROR(TAG, ret, return ret, "Run pipeline failed, ret: %x", ret);
 
     player->state = ESP_ASP_STATE_NONE;
-    xEventGroupClearBits(player->wait_event, PIPELINE_ERROR_BIT | PIPELINE_STOPPED_BIT | PIPELINE_FINISHED_BIT);
-    EventBits_t uxBits = xEventGroupWaitBits(player->wait_event, PIPELINE_ERROR_BIT | PIPELINE_STOPPED_BIT | PIPELINE_FINISHED_BIT,
+    EventBits_t uxBits = xEventGroupWaitBits(player->wait_event, ASP_PIPELINE_ERROR_BIT | ASP_PIPELINE_STOPPED_BIT | ASP_PIPELINE_FINISHED_BIT,
                                              pdTRUE, pdFALSE, portMAX_DELAY);
-    if (uxBits & PIPELINE_ERROR_BIT) {
+    if (uxBits & ASP_PIPELINE_ERROR_BIT) {
         return ESP_GMF_ERR_FAIL;
     }
     return ESP_GMF_ERR_OK;
@@ -410,16 +425,19 @@ esp_gmf_err_t esp_audio_simple_player_destroy(esp_asp_handle_t handle)
     esp_audio_simple_player_t *player = (esp_audio_simple_player_t *)handle;
     if ((player->state == ESP_ASP_STATE_RUNNING) || (player->state == ESP_ASP_STATE_PAUSED)) {
         ESP_LOGW(TAG, "The player still running, call stop first, st: % d", player->state);
+        xEventGroupClearBits(player->wait_event, ASP_PIPELINE_ERROR_BIT | ASP_PIPELINE_STOPPED_BIT | ASP_PIPELINE_FINISHED_BIT);
         esp_audio_simple_player_stop(handle);
-        xEventGroupClearBits(player->wait_event, PIPELINE_ERROR_BIT | PIPELINE_STOPPED_BIT | PIPELINE_FINISHED_BIT);
-        xEventGroupWaitBits(player->wait_event, PIPELINE_ERROR_BIT | PIPELINE_STOPPED_BIT | PIPELINE_FINISHED_BIT,
+        xEventGroupWaitBits(player->wait_event, ASP_PIPELINE_ERROR_BIT | ASP_PIPELINE_STOPPED_BIT | ASP_PIPELINE_FINISHED_BIT,
                             pdTRUE, pdFALSE, portMAX_DELAY);
     }
     if (player->wait_event) {
         vEventGroupDelete(player->wait_event);
     }
-    esp_audio_dec_unregister_default();
-    esp_audio_simple_dec_unregister_default();
+    if (esp_asp_decoder_ref_count == 1) {
+        esp_audio_dec_unregister_default();
+        esp_audio_simple_dec_unregister_default();
+    }
+    esp_asp_decoder_ref_count--;
     esp_gmf_task_deinit(player->work_task);
     esp_gmf_pipeline_destroy(player->pipe);
     esp_gmf_pool_deinit(player->pool);

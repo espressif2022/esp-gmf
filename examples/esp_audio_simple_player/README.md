@@ -4,7 +4,7 @@
 The **ESP Audio Simple Player**, developed by Espressif and built on the ESP-GMF framework, is a lightweight and user-friendly audio player designed for simplicity and efficiency. With its modular, customizable, and resource-efficient architecture, it streamlines audio processing development, making it an ideal solution for audio applications in IoT devices. It offers developers a powerful yet flexible audio playback system.
 
 ## Key Features
-- Supports popular audio formats, including AAC, MP3, AMR, FLAC, WAV, M4A, and TS
+- Supports popular audio formats, including AAC, MP3, AMR, FLAC, WAV, M4A, RAW_OPUS, and TS
 - Configurable audio transformers with Bit Depth conversion, Channel conversion, and Sample Rate conversion
 - Provides both synchronous and asynchronous playback interfaces
 - Supports customizable IO streams and audio processing elements for tailored solutions

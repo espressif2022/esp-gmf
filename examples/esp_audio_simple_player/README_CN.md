@@ -4,7 +4,7 @@
 ESP Audio Simple Player 是由 Espressif 基于 ESP-GMF 设计的一个简单易用的音频播放器。它具有模块化、可定制、低资源占用等设计特点，能够简化音频处理开发流程，非常适用于物联网设备的音频应用场景，为开发者提供了一种高效、灵活的音频播放解决方案。
 
 ## 特性
-- 支持常见音频格式，包括 AAC、MP3、AMR、FLAC、WAV、M4A 和 TS
+- 支持常见音频格式，包括 AAC、MP3、AMR、FLAC、WAV、M4A、RAW_OPUS 和 TS
 - 支持可配置音频变换器，包括 Bit Depth 转换、Channel 转换和 Sample Rate 转换
 - 提供同步和异步播放接口
 - 支持定制化的 IO stream 和音频处理元素
