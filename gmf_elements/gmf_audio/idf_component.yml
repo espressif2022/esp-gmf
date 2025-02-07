@@ -3,7 +3,7 @@ description: Espressif GMF Elements Audio Module
 
 dependencies:
   espressif/esp_audio_codec:
-    version: "~2.0.0"
+    version: "~2.1.0"
   espressif/esp_audio_effects:
     version: "~1.0.0"
   espressif/gmf_core:
