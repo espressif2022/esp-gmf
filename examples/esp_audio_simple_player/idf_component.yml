@@ -15,6 +15,6 @@ dependencies:
     git: https://github.com/espressif/esp-gmf.git
   espressif/gmf_io:
     # path: ../../gmf_elements/gmf_io
-    # version: "*"
+    version: "*"
     path: ./gmf_elements/gmf_io
     git: https://github.com/espressif/esp-gmf.git
